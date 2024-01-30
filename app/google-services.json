@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "731377025127",
+    "project_id": "acm431-proje",
+    "storage_bucket": "acm431-proje.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:731377025127:android:e36c1b9ff8963ccecbd4c2",
+        "android_client_info": {
+          "package_name": "com.acm431proje.hesapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAO8mam-gTBg1lmZ41K2G58DwPT-4NS5SQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

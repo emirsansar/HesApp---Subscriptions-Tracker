@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.acm431proje.hesapp.Main.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_servicesFragment"
+            app:destination="@id/servicesFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_usersServicesFragment"
+            app:destination="@id/usersServicesFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_offersFragment"
+            app:destination="@id/offersFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_offersFragment2"
+            app:destination="@id/offersFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/servicesFragment"
+        android:name="com.acm431proje.hesapp.Main.ServicesFragment"
+        android:label="fragment_subscriptions"
+        tools:layout="@layout/fragment_services" >
+        <action
+            android:id="@+id/action_servicesFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_servicesFragment_to_usersServicesFragment"
+            app:destination="@id/usersServicesFragment" />
+        <action
+            android:id="@+id/action_servicesFragment_to_offersFragment"
+            app:destination="@id/offersFragment" />
+        <action
+            android:id="@+id/action_servicesFragment_to_homeFragment2"
+            app:destination="@id/homeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/offersFragment"
+        android:name="com.acm431proje.hesapp.Main.OffersFragment"
+        android:label="fragment_offers"
+        tools:layout="@layout/fragment_offers" >
+        <action
+            android:id="@+id/action_offersFragment_to_usersServicesFragment"
+            app:destination="@id/usersServicesFragment" />
+        <action
+            android:id="@+id/action_offersFragment_to_servicesFragment"
+            app:destination="@id/servicesFragment" />
+        <action
+            android:id="@+id/action_offersFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_offersFragment_to_homeFragment2"
+            app:destination="@id/homeFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/usersServicesFragment"
+        android:name="com.acm431proje.hesapp.Main.UserSubscriptionsFragment"
+        android:label="fragment_users_services"
+        tools:layout="@layout/fragment_users_subscriptions" >
+        <action
+            android:id="@+id/action_usersServicesFragment_to_offersFragment"
+            app:destination="@id/offersFragment" />
+        <action
+            android:id="@+id/action_usersServicesFragment_to_servicesFragment"
+            app:destination="@id/servicesFragment" />
+        <action
+            android:id="@+id/action_usersServicesFragment_to_homeFragment"
+            app:destination="@id/homeFragment" />
+        <action
+            android:id="@+id/action_usersServicesFragment_to_offersFragment2"
+            app:destination="@id/offersFragment" />
+    </fragment>
+</navigation>

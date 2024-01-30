@@ -1,0 +1,30 @@
+<resources>
+    <string name="app_name">HesApp</string>
+
+
+    <string-array name="filter_options_services">
+        <item>----</item>
+        <item>Alfabetik Artan ↑</item>
+        <item>Alfabetik Azalan ↓</item>
+    </string-array>
+
+    <string-array name="filter_options_owned_services">
+        <item>----</item>
+        <item>Fiyat Artan ↑</item>
+        <item>Fiyat Azalan↓</item>
+        <item>Alfabetik Artan ↑</item>
+        <item>Alfabetik Azalan↓</item>
+    </string-array>
+
+    <string-array name="filter_options_categories">
+        <item>----</item>
+        <item>Alışveriş</item>
+        <item>Dizi/Film</item>
+        <item>Gelişim</item>
+        <item>Müzik</item>
+        <item>Oyun</item>
+        <item>Spor</item>
+    </string-array>
+
+
+</resources>

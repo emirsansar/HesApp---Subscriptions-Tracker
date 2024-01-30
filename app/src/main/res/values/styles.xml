@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="HesAppTheme" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="colorPrimary">#d0bce6</item>
+        <item name="colorPrimaryVariant">#23bcc4</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <item name="android:statusBarColor">@color/ana_mor</item>
+    </style>
+
+    <style name="DarkTheme" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="colorPrimary">#d0bce6</item>
+        <item name="colorPrimaryVariant">#23bcc4</item>
+        <item name="colorOnPrimary">@color/white</item>
+
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+
+
+</resources>
