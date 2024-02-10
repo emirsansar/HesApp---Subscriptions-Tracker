@@ -57,6 +57,4 @@ class ServicesAdapter(private val serviceList: ArrayList<Service>, private val l
 
         //holder.binding.linearLayout.setBackgroundColor(Color.parseColor(colors.get(position%2)))
     }
-
-
 }
