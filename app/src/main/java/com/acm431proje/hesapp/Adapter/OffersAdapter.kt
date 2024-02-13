@@ -21,23 +21,21 @@ class OffersAdapter(private val offersList: ArrayList<Offer>): RecyclerView.Adap
     }
 
     override fun onBindViewHolder(holder: RowHolder, position: Int) {
-
-        val currentOffer = offersList.get(position)
+        val currentOffer = offersList[position]
 
         holder.binding.textOfferInfo.text = currentOffer.offerText
 
         val companyName = currentOffer.company
 
-        val imagename = "offer_" + "${companyName.replace(" ", "").lowercase()}"
+        val imageName = "offer_" + companyName.replace(" ", "").lowercase()
 
-        val resourceId = holder.itemView.context.resources.getIdentifier(imagename, "drawable", holder.itemView.context.packageName)
-
+        val resourceId = holder.itemView.context.resources.getIdentifier(imageName, "drawable", holder.itemView.context.packageName)
         if (resourceId != 0) {
             holder.binding.companyIcon.setImageResource(resourceId)
         }
         else {
             holder.binding.companyIcon.setImageResource(R.drawable.no_image)
         }
-
     }
+
 }

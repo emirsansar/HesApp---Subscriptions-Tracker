@@ -8,11 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.Toast
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.acm431proje.hesapp.Adapter.PlansAdapter
 import com.acm431proje.hesapp.Adapter.UserSubscriptionsAdapter
+import com.acm431proje.hesapp.Model.Plan
 import com.acm431proje.hesapp.Model.UserSubscription
+import com.acm431proje.hesapp.ViewModel.UserSubsViewModel
 import com.acm431proje.hesapp.databinding.FragmentUsersSubscriptionsBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -21,7 +27,6 @@ import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
@@ -34,10 +39,12 @@ class UserSubscriptionsFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private var currentUser: FirebaseUser? = null
 
-    private lateinit var ownedServicesList: ArrayList<UserSubscription>
-    private var feedOwnedServicesAdapter: UserSubscriptionsAdapter? = null
+    //private lateinit var ownedServicesList: ArrayList<UserSubscription>
+    private var userSubsAdapter: UserSubscriptionsAdapter? = null
 
-    private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var viewModel : UserSubsViewModel
+
+    private var clickedServiceName: String ?= null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,145 +65,85 @@ class UserSubscriptionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        ownedServicesList = ArrayList()
-
-        layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerView.layoutManager = layoutManager
+        //ownedServicesList = ArrayList()
 
         val userEmail = auth.currentUser!!.email
 
+        viewModel = ViewModelProvider(this)[UserSubsViewModel::class.java]
+
+        binding.recyclerPlansView.layoutManager = LinearLayoutManager(context)
+
+        userSubsAdapter = UserSubscriptionsAdapter(arrayListOf()) { clickedUserSub ->
+            selectClickedUserSub(clickedUserSub)
+        }
+
+        binding.recyclerPlansView.adapter = userSubsAdapter
 
         lifecycleScope.launch(Dispatchers.Main) {
-            getUsersOwnedServices(userEmail!!)
-
-            feedOwnedServicesAdapter = UserSubscriptionsAdapter(ownedServicesList)
-            binding.recyclerView.adapter = feedOwnedServicesAdapter
-            feedOwnedServicesAdapter?.notifyDataSetChanged()
-
-            updateUIVisibility(ownedServicesList)
+            viewModel.refreshData(userEmail!!)
+            observeLiveData()
         }
 
 
         binding.btnRemoveSub.setOnClickListener {
-            handleRemoveSubscription(userEmail!!)
+            if (!clickedServiceName.isNullOrEmpty()){
+                showRemoveConfirmDialog(clickedServiceName!!) { confirmed ->
+                    if (confirmed) {
+                        lifecycleScope.launch(Dispatchers.Main) {
 
-            HomeFragment.isChangedUserPlans = true
+                            val isSuccess = viewModel.removeSubFromUser(userEmail!!,clickedServiceName!!)
+
+                            if (isSuccess) {
+                                Toast.makeText(requireContext(), "'$clickedServiceName' aboneliğiniz başarıyla kaldırıldı.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(requireContext(), "Abonelik kaldırılırken bir hata oluştu.", Toast.LENGTH_SHORT).show()
+                            }
+
+                            viewModel.refreshData(userEmail!!)
+                        }
+                    }
+                }
+                userSubsAdapter!!.selectedPosition = -1
+
+                HomeFragment.isChangedUserPlans = true
+            } else {
+                Toast.makeText(requireContext(), "Lütfen bir abonelik seçiniz!", Toast.LENGTH_SHORT).show()
+            }
         }
-
 
         binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?, view: View?, position: Int, id: Long
             ) {
                 when (position) {
-                    1 -> ownedServicesList.sortBy { it.planPrice } // fiyat artan
-                    2 -> ownedServicesList.sortByDescending { it.planPrice } // fiyat azalan
-                    3 -> ownedServicesList.sortBy { it.serviceName } // alfabetik artan
-                    4 -> ownedServicesList.sortByDescending { it.serviceName } // alfabetik azalan
+                    1 -> userSubsAdapter!!.sortByPriceAscending()
+                    2 -> userSubsAdapter!!.sortByPriceDescending()
+                    3 -> userSubsAdapter!!.sortByNameAscending()
+                    4 -> userSubsAdapter!!.sortByNameDescending()
                     else -> {
                     }
                 }
-                feedOwnedServicesAdapter?.notifyDataSetChanged()
             }
 
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
     }
 
+    private fun selectClickedUserSub(userSub: UserSubscription){
+        clickedServiceName = userSub.serviceName
+    }
 
-    private fun handleRemoveSubscription(userEmail: String) {
-        val selectedPosition = feedOwnedServicesAdapter?.selectedPosition
+    private fun observeLiveData(){
+        viewModel.userSubs.observe(viewLifecycleOwner, Observer { userSubs ->
+            userSubs?.let {
+                userSubsAdapter?.updateData(userSubs)
 
-        if (selectedPosition != RecyclerView.NO_POSITION) {
-            val selectedService = ownedServicesList[selectedPosition!!]
-            val selectedServiceName = selectedService.serviceName
-
-            showRemoveConfirmDialog(selectedServiceName) { confirmed ->
-                if (confirmed) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-
-                        if ( removeServiceFromUser(userEmail, selectedServiceName)){
-                            feedOwnedServicesAdapter!!.selectedPosition = -1
-
-                            updateUIVisibility(ownedServicesList)
-                        }
-                    }
-                }
-
+                updateUIVisibility(userSubs)
             }
-        } else {
-            Toast.makeText(requireContext(), "Lütfen bir servis seçin", Toast.LENGTH_SHORT).show()
-        }
-    }
+        })
 
-    private suspend fun removeServiceFromUser(userEmail: String, serviceName: String): Boolean{
-        return try {
-            val userServicesRef = firestore.collection("usersubscriptions").document(userEmail)
-
-            userServicesRef.update(serviceName, FieldValue.delete()).await()
-
-            val serviceCollectionRef = userServicesRef.collection(serviceName)
-            serviceCollectionRef.get().addOnSuccessListener { querySnapshot ->
-                for (document in querySnapshot) {
-                    document.reference.delete()
-                }
-
-                ownedServicesList.removeAll { list -> list.serviceName == serviceName }
-                feedOwnedServicesAdapter?.notifyDataSetChanged()
-            }.await()
-
-            Toast.makeText(requireContext(), "'$serviceName' aboneliğiniz başarıyla kaldırıldı.", Toast.LENGTH_SHORT).show()
-
-            true
-        }
-        catch (e: Exception) {
-            Toast.makeText(requireContext(), "Abonelik kaldırılamadı: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-            false
-        }
 
     }
-
-    private suspend fun getUsersOwnedServices(userEmail: String) {
-
-        try {
-            val documentRef = firestore.collection("usersubscriptions").document(userEmail)
-            val documentSnapshot = documentRef.get().await()
-
-            if (documentSnapshot.exists()) {
-                val collections = documentSnapshot.data?.keys
-
-                if (collections != null) {
-                    for (collectionName in collections) {
-
-                        val subCollectionReference = documentRef.collection(collectionName)
-                        val documentsInSubCollection = subCollectionReference.get().await()
-
-                        for (document in documentsInSubCollection) {
-                            val data = document.data
-
-                            val serviceName = data?.get("serviceName") as? String
-                            val planName = data?.get("planName") as? String
-                            val planPrice = data?.get("planPrice") as? Number
-
-                            if (serviceName != null && planName != null && planPrice != null) {
-                                val userSubscription =
-                                    UserSubscription(serviceName, planName, planPrice.toFloat())
-                                ownedServicesList.add(userSubscription)
-                            }
-                        }
-                    }
-
-                    ownedServicesList.sortBy { it.planPrice }
-                }
-            }
-        }
-        catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
 
 
     private fun showRemoveConfirmDialog(serviceName: String, callback: (Boolean) -> Unit) {
@@ -218,19 +165,19 @@ class UserSubscriptionsFragment : Fragment() {
     }
 
 
-    private fun updateUIVisibility(list: ArrayList<UserSubscription>) {
+    private fun updateUIVisibility(list: List<UserSubscription>) {
         if (list.isEmpty()) {
-            binding.recyclerView.visibility = View.GONE
+            binding.recyclerPlansView.visibility = View.GONE
             binding.textNoSubs.text = "Herhangi bir\n aboneliğiniz\n bulunmamaktadır."
             binding.textButtonInfo.visibility = View.INVISIBLE
             binding.btnRemoveSub.visibility = View.INVISIBLE
-            binding.recyclerView.visibility = View.INVISIBLE
+            binding.recyclerPlansView.visibility = View.INVISIBLE
         } else {
-            binding.recyclerView.visibility = View.VISIBLE
+            binding.recyclerPlansView.visibility = View.VISIBLE
             binding.textNoSubs.text = ""
             binding.textButtonInfo.visibility = View.VISIBLE
             binding.btnRemoveSub.visibility = View.VISIBLE
-            binding.recyclerView.visibility = View.VISIBLE
+            binding.recyclerPlansView.visibility = View.VISIBLE
         }
     }
 
