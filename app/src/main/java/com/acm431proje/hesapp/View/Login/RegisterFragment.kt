@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Login
+package com.acm431proje.hesapp.View.Login
 
 import android.content.Context
 import android.os.Bundle
@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import androidx.navigation.fragment.findNavController
 import com.acm431proje.hesapp.databinding.FragmentRegisterBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth

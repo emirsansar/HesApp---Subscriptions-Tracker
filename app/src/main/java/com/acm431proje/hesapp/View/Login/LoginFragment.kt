@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Login
+package com.acm431proje.hesapp.View.Login
 
 import android.content.Context
 import android.content.Intent
@@ -10,7 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import com.acm431proje.hesapp.Main.MainActivity
+import com.acm431proje.hesapp.View.Main.MainActivity
 import com.acm431proje.hesapp.databinding.FragmentLoginBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth

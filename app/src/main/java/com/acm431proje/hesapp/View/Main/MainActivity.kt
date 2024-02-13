@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Main
+package com.acm431proje.hesapp.View.Main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle

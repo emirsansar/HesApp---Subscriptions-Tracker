@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Main
+package com.acm431proje.hesapp.View.Main
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -9,12 +9,9 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.acm431proje.hesapp.Adapter.PlansAdapter
-import com.acm431proje.hesapp.Adapter.ServicesAdapter
-import com.acm431proje.hesapp.Adapter.UserSubscriptionsAdapter
 import com.acm431proje.hesapp.Model.Plan
 import com.acm431proje.hesapp.R
 import com.acm431proje.hesapp.ViewModel.PlansViewModel
-import com.acm431proje.hesapp.ViewModel.ServicesViewModel
 import com.acm431proje.hesapp.databinding.ActivityPlansBinding
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -22,11 +19,9 @@ import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.collections.hashMapOf as hashMapOf1
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
-import kotlinx.coroutines.tasks.await
 
 class PlansActivity : AppCompatActivity() {
 

@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Main
+package com.acm431proje.hesapp.View.Main
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -13,10 +13,6 @@ import com.acm431proje.hesapp.databinding.FragmentOffersBinding
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class OffersFragment : Fragment() {
 

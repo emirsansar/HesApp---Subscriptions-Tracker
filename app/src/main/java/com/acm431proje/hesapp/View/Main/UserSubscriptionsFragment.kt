@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Main
+package com.acm431proje.hesapp.View.Main
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -8,15 +8,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.Toast
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.acm431proje.hesapp.Adapter.PlansAdapter
 import com.acm431proje.hesapp.Adapter.UserSubscriptionsAdapter
-import com.acm431proje.hesapp.Model.Plan
 import com.acm431proje.hesapp.Model.UserSubscription
 import com.acm431proje.hesapp.ViewModel.UserSubsViewModel
 import com.acm431proje.hesapp.databinding.FragmentUsersSubscriptionsBinding
@@ -24,12 +20,10 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class UserSubscriptionsFragment : Fragment() {
 

@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/homeFragment"
-        android:name="com.acm431proje.hesapp.Main.HomeFragment"
+        android:name="com.acm431proje.hesapp.View.Main.HomeFragment"
         android:label="fragment_home"
         tools:layout="@layout/fragment_home" >
         <action
@@ -25,7 +25,7 @@
     </fragment>
     <fragment
         android:id="@+id/servicesFragment"
-        android:name="com.acm431proje.hesapp.Main.ServicesFragment"
+        android:name="com.acm431proje.hesapp.View.Main.ServicesFragment"
         android:label="fragment_subscriptions"
         tools:layout="@layout/fragment_services" >
         <action
@@ -43,7 +43,7 @@
     </fragment>
     <fragment
         android:id="@+id/offersFragment"
-        android:name="com.acm431proje.hesapp.Main.OffersFragment"
+        android:name="com.acm431proje.hesapp.View.Main.OffersFragment"
         android:label="fragment_offers"
         tools:layout="@layout/fragment_offers" >
         <action
@@ -61,7 +61,7 @@
     </fragment>
     <fragment
         android:id="@+id/usersServicesFragment"
-        android:name="com.acm431proje.hesapp.Main.UserSubscriptionsFragment"
+        android:name="com.acm431proje.hesapp.View.Main.UserSubscriptionsFragment"
         android:label="fragment_users_services"
         tools:layout="@layout/fragment_users_subscriptions" >
         <action

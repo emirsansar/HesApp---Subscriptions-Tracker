@@ -1,4 +1,4 @@
-package com.acm431proje.hesapp.Main
+package com.acm431proje.hesapp.View.Main
 
 import android.app.AlertDialog
 import android.content.Intent
@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.lifecycleScope
-import com.acm431proje.hesapp.Login.LoginActivity
+import com.acm431proje.hesapp.View.Login.LoginActivity
 import com.acm431proje.hesapp.databinding.FragmentHomeBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth

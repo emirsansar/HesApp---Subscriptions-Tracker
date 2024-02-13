@@ -1,13 +1,10 @@
 package com.acm431proje.hesapp.Adapter
 
 import android.content.Intent
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
-import com.acm431proje.hesapp.Main.PlansActivity
+import com.acm431proje.hesapp.View.Main.PlansActivity
 import com.acm431proje.hesapp.R
 import com.acm431proje.hesapp.databinding.RowServicesBinding
 import com.acm431proje.hesapp.Model.Service
