@@ -19,9 +19,9 @@ import kotlinx.coroutines.withContext
 
 class UserDetailViewModel(application: Application): BaseViewModel(application) {
 
-    val userDetails = MutableLiveData<UserDetails>()
+    private val userDetails = MutableLiveData<UserDetails>()
 
-    val firestore = Firebase.firestore
+    private val firestore = Firebase.firestore
 
      fun refreshDataFromFirebase(userEmail: String, userFullName: String, callback: (UserDetails?) -> Unit) {
         calculateSubCountAndMonthlySpending(userEmail){ subCountAndSpending ->
@@ -54,17 +54,6 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
         }
     }
 
-
-    fun getUserID(userEmail: String): String{
-        var uid: String ?= null
-
-        firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
-            uid = documentSnapshot.getString("uid")
-        }.addOnFailureListener { e->
-        }
-
-        return uid.toString()
-    }
 
     fun getUserFullName(userEmail: String, callback: (String?) -> Unit) {
         launch {

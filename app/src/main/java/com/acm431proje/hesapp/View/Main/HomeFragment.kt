@@ -43,7 +43,6 @@ class HomeFragment: Fragment() {
         firestore = Firebase.firestore
         auth = Firebase.auth
         currentUser = auth.currentUser
-
     }
 
     override fun onCreateView(
@@ -80,6 +79,8 @@ class HomeFragment: Fragment() {
         if(isAppLaunched){
             viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
                 updateUI(userDetail!!)
+
+                viewModel.insertUserDetailToDB(userDetail)
             }
 
             isAppLaunched = false
@@ -88,6 +89,8 @@ class HomeFragment: Fragment() {
             if (isChangedUserPlans) {
                 viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
                     updateUI(userDetail!!)
+
+                    viewModel.updateUserDetailToDB(userDetail)
                 }
 
                 isChangedUserPlans = false
