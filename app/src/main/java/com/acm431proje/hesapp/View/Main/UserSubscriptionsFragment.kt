@@ -10,7 +10,6 @@ import android.widget.AdapterView
 import android.widget.Toast
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.acm431proje.hesapp.Adapter.UserSubscriptionsAdapter
 import com.acm431proje.hesapp.Model.UserSubscription
@@ -22,8 +21,6 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class UserSubscriptionsFragment : Fragment() {
 
@@ -33,7 +30,6 @@ class UserSubscriptionsFragment : Fragment() {
     private lateinit var auth: FirebaseAuth
     private var currentUser: FirebaseUser? = null
 
-    //private lateinit var ownedServicesList: ArrayList<UserSubscription>
     private var userSubsAdapter: UserSubscriptionsAdapter? = null
 
     private lateinit var viewModel : UserSubsViewModel
@@ -48,6 +44,10 @@ class UserSubscriptionsFragment : Fragment() {
         currentUser = auth.currentUser
     }
 
+    companion object {
+        var shouldFetchDataFromFirebase = true
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -59,10 +59,21 @@ class UserSubscriptionsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        //ownedServicesList = ArrayList()
-
         val userEmail = auth.currentUser!!.email
 
+        initializeViews()
+
+        setupRecyclerView(userEmail!!)
+
+        observeLiveData()
+
+        removeSubListener(userEmail!!)
+        setSpinnerListener()
+        swipeRefreshLayoutListener(userEmail!!)
+    }
+
+    
+    private fun initializeViews(){
         viewModel = ViewModelProvider(this)[UserSubsViewModel::class.java]
 
         binding.recyclerPlansView.layoutManager = LinearLayoutManager(context)
@@ -72,30 +83,34 @@ class UserSubscriptionsFragment : Fragment() {
         }
 
         binding.recyclerPlansView.adapter = userSubsAdapter
+    }
 
-        lifecycleScope.launch(Dispatchers.Main) {
-            viewModel.refreshData(userEmail!!)
+    private fun setupRecyclerView(userEmail: String){
+        if (shouldFetchDataFromFirebase){
+            viewModel.getUserSubsFromFirebase(userEmail){ userSubs ->
+                viewModel.insertAllSubsToDB(userSubs!!)
+
+                shouldFetchDataFromFirebase = false
+            }
+        } else {
+            viewModel.getAllSubsFromDB()
         }
-
-        observeLiveData()
-
+    }
+    private fun removeSubListener(userEmail: String){
         binding.btnRemoveSub.setOnClickListener {
             if (!clickedServiceName.isNullOrEmpty()){
                 showRemoveConfirmDialog(clickedServiceName!!) { confirmed ->
                     if (confirmed) {
-                        lifecycleScope.launch(Dispatchers.Main) {
-
-                            val isSuccess = viewModel.removeSubFromUser(userEmail!!,clickedServiceName!!)
-
-                            if (isSuccess) {
+                        viewModel.removeSubFromFirebase(userEmail,clickedServiceName!!){ isSuccess ->
+                            if (isSuccess!!) {
+                                viewModel.deleteSubFromDB(clickedServiceName!!)
                                 Toast.makeText(requireContext(), "'$clickedServiceName' aboneliğiniz başarıyla kaldırıldı.", Toast.LENGTH_SHORT).show()
                             } else {
                                 Toast.makeText(requireContext(), "Abonelik kaldırılırken bir hata oluştu.", Toast.LENGTH_SHORT).show()
                             }
-
-                            viewModel.userSubsLoading.value = true
-                            viewModel.refreshData(userEmail!!)
                         }
+                        
+                        viewModel.getUserSubsFromFirebase(userEmail){}
                     }
                 }
                 userSubsAdapter!!.selectedPosition = -1
@@ -106,6 +121,8 @@ class UserSubscriptionsFragment : Fragment() {
             }
         }
 
+    }
+    private fun setSpinnerListener(){
         binding.spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(
                 parent: AdapterView<*>?, view: View?, position: Int, id: Long
@@ -122,13 +139,13 @@ class UserSubscriptionsFragment : Fragment() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+    }
 
+    private fun swipeRefreshLayoutListener(userEmail: String){
         binding.swipeRefreshLayout.setOnRefreshListener {
             viewModel.userSubsLoading.value = true
 
-            lifecycleScope.launch(Dispatchers.Main) {
-                viewModel.refreshData(userEmail!!)
-            }
+            viewModel.getUserSubsFromFirebase(userEmail){}
 
             binding.swipeRefreshLayout.isRefreshing = false
         }
@@ -142,7 +159,6 @@ class UserSubscriptionsFragment : Fragment() {
         viewModel.userSubs.observe(viewLifecycleOwner, Observer { userSubs ->
             userSubs?.let {
                 userSubsAdapter?.updateData(userSubs)
-
                 updateUIVisibility(userSubs)
             }
         })
@@ -186,13 +202,16 @@ class UserSubscriptionsFragment : Fragment() {
             binding.textNoSubs.text = "Herhangi bir\n aboneliğiniz\n bulunmamaktadır."
             binding.textButtonInfo.visibility = View.INVISIBLE
             binding.btnRemoveSub.visibility = View.INVISIBLE
-            binding.recyclerPlansView.visibility = View.INVISIBLE
+            //binding.recyclerPlansView.visibility = View.GONE
+            binding.userSubsProgressBar.visibility = View.GONE
+            binding.swipeRefreshLayout.visibility = View.GONE
         } else {
             binding.recyclerPlansView.visibility = View.VISIBLE
             binding.textNoSubs.text = ""
             binding.textButtonInfo.visibility = View.VISIBLE
             binding.btnRemoveSub.visibility = View.VISIBLE
             binding.recyclerPlansView.visibility = View.VISIBLE
+            binding.swipeRefreshLayout.visibility = View.VISIBLE
         }
     }
 

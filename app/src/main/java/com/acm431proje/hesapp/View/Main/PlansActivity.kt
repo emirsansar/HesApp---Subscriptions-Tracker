@@ -49,47 +49,13 @@ class PlansActivity : AppCompatActivity() {
         firestore = Firebase.firestore
 
         serviceName = intent.getStringExtra("serviceName").toString()
-        binding.textServiceName.text = serviceName
-        setServiceImage()
-
-        binding.recyclerPlansView.layoutManager = LinearLayoutManager(this)
-
-        plansAdapter = PlansAdapter(arrayListOf()) { clickedPlan ->
-            selectClickedPlan(clickedPlan)
-        }
-        binding.recyclerPlansView.adapter = plansAdapter
+        initializeViews(serviceName)
 
         viewModel = ViewModelProvider(this)[PlansViewModel::class.java]
-        viewModel.refreshData(serviceName)
+        setupRecyclerView()
 
-        observeLiveData()
-
-
-        binding.btnSelect.setOnClickListener {
-
-            if (clickedPlanName != null && clickedPlanPrice != null){
-                CoroutineScope(Dispatchers.Main).launch {
-                    val userEmail = auth.currentUser?.email
-
-                    if (userEmail != null) {
-                        val isSuccess = viewModel.addServiceToUser(userEmail, serviceName, clickedPlanName!!, clickedPlanPrice!!)
-                            if (isSuccess){
-                                Toast.makeText(this@PlansActivity, "Abonelik başarıyla eklendi.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(this@PlansActivity, "Abonelik eklenirken hata oluştu!", Toast.LENGTH_SHORT).show()
-                            }
-                    }
-                    HomeFragment.isChangedUserPlans = true
-                    finish()
-                }
-            } else {
-                Toast.makeText(this@PlansActivity, "Bir plan seçiniz!", Toast.LENGTH_LONG).show()
-            }
-        }
-
-        binding.imageBackToServiceScreen.setOnClickListener {
-            backToServiceScreen()
-        }
+        setSelectListener()
+        setBackToServiceScreenListener()
     }
 
     private fun observeLiveData(){
@@ -128,7 +94,15 @@ class PlansActivity : AppCompatActivity() {
         clickedPlanPrice = plan.price
     }
 
-    private fun setServiceImage(){
+    private fun setupRecyclerView(){
+        viewModel.refreshData(serviceName)
+
+        observeLiveData()
+    }
+
+    private fun setViews(serviceName: String){
+        binding.textServiceName.text = serviceName
+
         val imageName = serviceName.replace(" ", "").replace("+", "").lowercase()
 
         val resourceId = resources.getIdentifier(imageName, "drawable", packageName)
@@ -136,6 +110,48 @@ class PlansActivity : AppCompatActivity() {
             binding.imageService.setImageResource(resourceId)
         } else {
             binding.imageService.setImageResource(R.drawable.no_image)
+        }
+    }
+
+    private fun initializeViews(serviceName: String){
+        setViews(serviceName)
+
+        binding.recyclerPlansView.layoutManager = LinearLayoutManager(this)
+
+        plansAdapter = PlansAdapter(arrayListOf()) { clickedPlan ->
+            selectClickedPlan(clickedPlan)
+        }
+        binding.recyclerPlansView.adapter = plansAdapter
+    }
+
+    private fun setSelectListener(){
+        binding.btnSelect.setOnClickListener {
+            if (clickedPlanName != null && clickedPlanPrice != null){
+                CoroutineScope(Dispatchers.Main).launch {
+                    val userEmail = auth.currentUser?.email
+
+                    if (userEmail != null) {
+                        val isSuccess = viewModel.addServiceToUser(userEmail, serviceName, clickedPlanName!!, clickedPlanPrice!!)
+
+                        if (isSuccess){
+                            Toast.makeText(this@PlansActivity, "Abonelik başarıyla eklendi.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(this@PlansActivity, "Abonelik eklenirken hata oluştu!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    HomeFragment.isChangedUserPlans = true
+                    UserSubscriptionsFragment.shouldFetchDataFromFirebase = true
+                    finish()
+                }
+            } else {
+                Toast.makeText(this@PlansActivity, "Bir plan seçiniz!", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun setBackToServiceScreenListener(){
+        binding.imageBackToServiceScreen.setOnClickListener {
+            backToServiceScreen()
         }
     }
 

@@ -5,11 +5,13 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.acm431proje.hesapp.Model.UserDetails
+import com.acm431proje.hesapp.Model.UserSubscription
 
-@Database(entities = [UserDetails::class], version = 6)
+@Database(entities = [UserDetails::class, UserSubscription::class], version = 7)
 abstract class AppDatabase: RoomDatabase() {
 
     abstract fun userDetailDao(): UserDetailDao
+    abstract fun userSubsDao(): UserSubsDao
 
     companion object {
 
