@@ -73,31 +73,7 @@ class HomeFragment : Fragment() {
         lifecycleScope.launch(Dispatchers.Main){
             val userFullName = viewModel.getUserFullName(userEmail)
 
-            if(isAppLaunched){
-                viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
-
-                viewModel.userDetails.value?.let { userDetail ->
-                    updateUI(userDetail)
-                    userDetailDao.update(userDetail)
-                }
-
-                isAppLaunched = false
-            }
-            else {
-                if (isChangedUserPlans) {
-                    viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
-
-                    viewModel.userDetails.value?.let { userDetail ->
-                        updateUI(userDetail)
-                    }
-
-                    isChangedUserPlans = false
-                }
-                else{
-                    userDetailDao.getUserDetail(userID)?.let {
-                        updateUI(it) }
-                }
-            }
+            loadingUserDetails(userEmail, userID, userFullName)
         }
 
 
@@ -107,6 +83,37 @@ class HomeFragment : Fragment() {
     }
 
 
+
+    private suspend fun loadingUserDetails(userEmail: String, userID: String, userFullName: String){
+
+        if(Companion.isAppLaunched){
+            viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
+
+            viewModel.userDetails.value?.let { userDetail ->
+                updateUI(userDetail)
+                viewModel.insertUserDetailToDB(userDetail)
+            }
+
+            Companion.isAppLaunched = false
+        }
+        else {
+            if (isChangedUserPlans) {
+                viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
+
+                viewModel.userDetails.value?.let { userDetail ->
+                    viewModel.updateUserDetailToDB(userDetail)
+                    updateUI(userDetail)
+                }
+
+                isChangedUserPlans = false
+            }
+            else{
+                viewModel.refreshDataFromRoomDB(userID) { userDetail ->
+                    updateUI(userDetail!!)
+                }
+            }
+        }
+    }
 
     private fun updateUI(userDetail: UserDetails){
         binding.textGreeting.text = userDetail.fullName

@@ -17,13 +17,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-class UserDetailViewModel(): ViewModel() {
+class UserDetailViewModel(application: Application): BaseViewModel(application) {
 
     val userDetails = MutableLiveData<UserDetails>()
 
     val firestore = Firebase.firestore
-
-    // val db = Room.databaseBuilder(requireContext(), UserDetailDB::class.java,"UserDetail").allowMainThreadQueries().fallbackToDestructiveMigration().build()
 
     suspend fun refreshDataFromFirebase(userEmail: String, userID: String, userFullName: String) {
         val countAndSpending: Pair<Int, Float> = calculateSubCountAndMonthlySpending(userEmail)
@@ -34,11 +32,26 @@ class UserDetailViewModel(): ViewModel() {
         userDetails.value = userDetail
     }
 
-    suspend fun refreshDataFromRoomDB(userID: String){
-
+    fun refreshDataFromRoomDB(userID: String, callback: (UserDetails?) -> Unit) {
+        launch {
+            val userDetail = UserDetailDB(getApplication()).userDetailDao().getUserDetail(userID)
+            callback(userDetail)
+        }
     }
 
-     fun getUserID(userEmail: String): String{
+    fun insertUserDetailToDB(userDetails: UserDetails){
+        launch {
+            UserDetailDB(getApplication()).userDetailDao().insert(userDetails)
+        }
+    }
+
+    fun updateUserDetailToDB(userDetails: UserDetails){
+        launch {
+            UserDetailDB(getApplication()).userDetailDao().insert(userDetails)
+        }
+    }
+
+    fun getUserID(userEmail: String): String{
         var uid: String ?= null
 
         firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
@@ -48,6 +61,8 @@ class UserDetailViewModel(): ViewModel() {
 
         return uid.toString()
     }
+
+
 
     suspend fun getUserFullName(userEmail: String): String {
         var fullName: String? = null
@@ -71,21 +86,22 @@ class UserDetailViewModel(): ViewModel() {
         return fullName.toString()
     }
 
-    fun getUserFullName2(userEmail: String): String {
-        var fullName: String? = null
+    fun getUserFullName2(userEmail: String, callback: (String?) -> Unit) {
+        launch {
+            var fullName: String? = null
 
-        firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
-            val name = documentSnapshot.getString("uid")
-            val surname = documentSnapshot.getString("surname")
+            firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
+                val name = documentSnapshot.getString("uid")
+                val surname = documentSnapshot.getString("surname")
 
-            if (!name.isNullOrEmpty() && !surname.isNullOrEmpty()) {
-                fullName = "$name $surname"
+                if (!name.isNullOrEmpty() && !surname.isNullOrEmpty()) {
+                    fullName = "$name $surname"
+                }
+            }.addOnFailureListener { e->
+                Log.e("HATA", "Hata oluştu: ${e.localizedMessage}", e)
             }
-        }.addOnFailureListener { e->
-            Log.e("HATA", "Hata oluştu: ${e.localizedMessage}", e)
+            callback(fullName)
         }
-
-        return fullName.toString()
     }
 
     suspend fun calculateSubCountAndMonthlySpending(userEmail: String): Pair<Int, Float> {

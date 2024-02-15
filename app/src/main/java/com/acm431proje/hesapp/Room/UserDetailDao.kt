@@ -3,6 +3,7 @@ package com.acm431proje.hesapp.Room
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.acm431proje.hesapp.Model.UserDetails
@@ -16,7 +17,7 @@ interface UserDetailDao {
     @Query("SELECT * FROM user_detail WHERE uid = :userId")
     suspend fun getUserDetail(userId: String): UserDetails?
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(userDetails: UserDetails)
 
     @Update
