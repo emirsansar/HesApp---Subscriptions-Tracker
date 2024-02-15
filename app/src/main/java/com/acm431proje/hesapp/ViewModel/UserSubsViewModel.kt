@@ -15,8 +15,11 @@ class UserSubsViewModel: ViewModel() {
 
     var userSubs = MutableLiveData<List<UserSubscription>>()
 
-    val userSubsError = MutableLiveData<Boolean>()
-    val userSubsLoading = MutableLiveData<Boolean>()
+    var userSubsError = MutableLiveData<Boolean>()
+    var userSubsLoading = MutableLiveData<Boolean>()
+    init {
+        userSubsLoading.value = true
+    }
 
     private var firestore = Firebase.firestore
 

@@ -153,6 +153,7 @@ class ServicesFragment : Fragment() {
                     binding.textError.visibility = View.INVISIBLE
                 } else {
                     binding.servicesLoading.visibility = View.GONE
+                    binding.recyclerServicesView.visibility = View.VISIBLE
                 }
             }
         })

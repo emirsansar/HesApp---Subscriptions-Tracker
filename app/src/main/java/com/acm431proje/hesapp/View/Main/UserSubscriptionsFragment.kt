@@ -75,9 +75,9 @@ class UserSubscriptionsFragment : Fragment() {
 
         lifecycleScope.launch(Dispatchers.Main) {
             viewModel.refreshData(userEmail!!)
-            observeLiveData()
         }
 
+        observeLiveData()
 
         binding.btnRemoveSub.setOnClickListener {
             if (!clickedServiceName.isNullOrEmpty()){
@@ -93,6 +93,7 @@ class UserSubscriptionsFragment : Fragment() {
                                 Toast.makeText(requireContext(), "Abonelik kaldırılırken bir hata oluştu.", Toast.LENGTH_SHORT).show()
                             }
 
+                            viewModel.userSubsLoading.value = true
                             viewModel.refreshData(userEmail!!)
                         }
                     }
@@ -121,6 +122,16 @@ class UserSubscriptionsFragment : Fragment() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {}
         }
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.userSubsLoading.value = true
+
+            lifecycleScope.launch(Dispatchers.Main) {
+                viewModel.refreshData(userEmail!!)
+            }
+
+            binding.swipeRefreshLayout.isRefreshing = false
+        }
     }
 
     private fun selectClickedUserSub(userSub: UserSubscription){
@@ -136,7 +147,17 @@ class UserSubscriptionsFragment : Fragment() {
             }
         })
 
-
+        viewModel.userSubsLoading.observe(viewLifecycleOwner, Observer { loading->
+            loading?.let {
+                if (it) {
+                    binding.userSubsProgressBar.visibility = View.VISIBLE
+                    binding.recyclerPlansView.visibility = View.INVISIBLE
+                } else {
+                    binding.userSubsProgressBar.visibility = View.GONE
+                    binding.recyclerPlansView.visibility = View.VISIBLE
+                }
+            }
+        })
     }
 
 

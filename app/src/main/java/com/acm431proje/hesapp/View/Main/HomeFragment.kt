@@ -7,9 +7,14 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.room.Room
+import com.acm431proje.hesapp.Model.UserDetails
+import com.acm431proje.hesapp.Room.UserDetailDB
+import com.acm431proje.hesapp.Room.UserDetailDao
 import com.acm431proje.hesapp.View.Login.LoginActivity
+import com.acm431proje.hesapp.ViewModel.UserDetailViewModel
 import com.acm431proje.hesapp.databinding.FragmentHomeBinding
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -19,7 +24,6 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 
 class HomeFragment : Fragment() {
 
@@ -29,15 +33,15 @@ class HomeFragment : Fragment() {
     private lateinit var firestore: FirebaseFirestore
     private var currentUser : FirebaseUser? = null
 
-    private lateinit var savedTotalSub :String
-    private lateinit var savedMonthlySpend :String
-    private lateinit var savedAnnualSpend :String
-    private lateinit var savedGreeting : String
+    private lateinit var viewModel : UserDetailViewModel
+
+    private lateinit var db: UserDetailDB
+    private lateinit var userDetailDao: UserDetailDao
 
     companion object {
-        var isChangedUserPlans: Boolean = true
+        var isChangedUserPlans: Boolean = false
+        var isAppLaunched: Boolean = true
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +49,9 @@ class HomeFragment : Fragment() {
         firestore = Firebase.firestore
         auth = Firebase.auth
         currentUser = auth.currentUser
+
+        db = Room.databaseBuilder(requireContext().applicationContext,UserDetailDB::class.java,"UserDetail").build()
+        userDetailDao = db.userDetailDao()
     }
 
     override fun onCreateView(
@@ -58,40 +65,39 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        viewModel = ViewModelProvider(this)[UserDetailViewModel::class.java]
+
         val userEmail = auth.currentUser!!.email
+        val userID = viewModel.getUserID(userEmail!!)
 
-        if (isChangedUserPlans) {
+        lifecycleScope.launch(Dispatchers.Main){
+            val userFullName = viewModel.getUserFullName(userEmail)
 
-            lifecycleScope.launch(Dispatchers.Main) {
-                if (userEmail != null) {
-                    Greeting(userEmail)
+            if(isAppLaunched){
+                viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
 
-                    val countAndSpending = calculateSubCountAndMonthlySpending(userEmail)
+                viewModel.userDetails.value?.let { userDetail ->
+                    updateUI(userDetail)
+                    userDetailDao.update(userDetail)
+                }
 
-                    binding.textTotalSub.text = countAndSpending.first.toString()
+                isAppLaunched = false
+            }
+            else {
+                if (isChangedUserPlans) {
+                    viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
 
-                    val monthlySpend = countAndSpending.second
-
-                    val monthlySpendFormatted = String.format("%.2f", monthlySpend)
-                    binding.textMonthlySpend.text = "$monthlySpendFormatted \u20BA"
-                    val annualSpendFormatted = String.format("%.2f", monthlySpend * 12)
-                    binding.textAnnualSpend.text = "$annualSpendFormatted \u20BA"
-
-
-                    savedTotalSub = binding.textTotalSub.text.toString()
-                    savedMonthlySpend = binding.textMonthlySpend.text.toString()
-                    savedAnnualSpend = binding.textAnnualSpend.text.toString()
-                    savedGreeting = binding.textGreeting.text.toString()
+                    viewModel.userDetails.value?.let { userDetail ->
+                        updateUI(userDetail)
+                    }
 
                     isChangedUserPlans = false
                 }
+                else{
+                    userDetailDao.getUserDetail(userID)?.let {
+                        updateUI(it) }
+                }
             }
-        }
-        else{
-            binding.textTotalSub.setText(savedTotalSub)
-            binding.textMonthlySpend.setText(savedMonthlySpend)
-            binding.textAnnualSpend.setText(savedAnnualSpend)
-            binding.textGreeting.setText(savedGreeting)
         }
 
 
@@ -102,90 +108,15 @@ class HomeFragment : Fragment() {
 
 
 
-    private fun Greeting(userEmail: String){
-        firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
-            val name = documentSnapshot.getString("name")
-            val surname = documentSnapshot.getString("surname")
+    private fun updateUI(userDetail: UserDetails){
+        binding.textGreeting.text = userDetail.fullName
+        binding.textTotalSub.text = userDetail.subCount.toString()
 
-            if (!name.isNullOrEmpty() && !surname.isNullOrEmpty()) {
-                binding.textGreeting.setText("$name $surname")
-            } else {
-                binding.textGreeting.text = ""
-            }
-        }.addOnFailureListener { e->
-            Toast.makeText(requireContext(),"Hata: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
-        }
+        val monthlySpendFormatted = String.format("%.2f", userDetail.spendingMonth)
+        binding.textMonthlySpend.text = "$monthlySpendFormatted \u20BA"
+        val annualSpendFormatted = String.format("%.2f", userDetail.spendingAnnual )
+        binding.textAnnualSpend.text = "$annualSpendFormatted \u20BA"
     }
-
-
-    private suspend fun calculateSubCountAndMonthlySpending(userEmail: String): Pair<Int, Float> {
-        var subCount = 0
-        var monthlySpending = 0f
-
-        try {
-            val documentRef = firestore.collection("usersubscriptions").document(userEmail)
-            val documentSnapshot = documentRef.get().await()
-
-            if (documentSnapshot.exists()) {
-                val collections = documentSnapshot.data?.keys
-
-                if (collections != null) {
-                    for (collectionName in collections) {
-                        val subsInformation = documentRef.collection(collectionName).document("subsinfo")
-                        val document = subsInformation.get().await()
-
-                        val data = document.data
-
-                        val planPrice = data?.get("planPrice") as? Number
-                        if (planPrice != null) {
-                            monthlySpending += planPrice.toFloat()
-                        }
-                        subCount++
-                    }
-                }
-            }
-        }
-        catch (e: Exception) {
-            Toast.makeText(requireContext(), "Bir hata oluştu: ${e.localizedMessage}",Toast.LENGTH_SHORT).show()
-        }
-
-        return Pair(first = subCount, second = monthlySpending)
-    }
-
-
-//    private fun calculateSubCountAndMonthlySpending(userEmail: String): Pair<Int, Float> {
-//        var subCount = 0
-//        var monthlySpending = 0f
-//
-//        val documentRef = firestore.collection("usersubscriptions").document(userEmail)
-//
-//        documentRef.get().addOnSuccessListener { documentSnapshot ->
-//            if (documentSnapshot.exists()) {
-//                val collections = documentSnapshot.data?.keys
-//
-//                if (collections != null) {
-//                    for (collectionName in collections) {
-//
-//                        documentRef.collection(collectionName)
-//                            .document("subsinfo").get().addOnSuccessListener { subsInfoSnapshot ->
-//                                val data = subsInfoSnapshot.data
-//
-//                                val planPrice = data?.get("planPrice") as? Number
-//                                if (planPrice != null) {
-//                                    monthlySpending += planPrice.toFloat()
-//                                }
-//
-//                                subCount++ }
-//                    }
-//                }
-//            }
-//        }
-//
-//        return Pair(first = subCount, second = monthlySpending)
-//    }
-
-
-
 
     private fun showLogoutConfirmDialog(){
         val builder = AlertDialog.Builder(requireContext())
@@ -194,8 +125,6 @@ class HomeFragment : Fragment() {
 
         builder.setPositiveButton("Evet") { dialog, which ->
             auth.signOut()
-
-            isChangedUserPlans = true
 
             val intent = Intent(requireContext(), LoginActivity::class.java)
             startActivity(intent)

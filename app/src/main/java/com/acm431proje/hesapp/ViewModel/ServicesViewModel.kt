@@ -11,13 +11,15 @@ class ServicesViewModel: ViewModel() {
     val services = MutableLiveData<List<Service>>()
 
     val servicesError = MutableLiveData<Boolean>()
-    val servicesLoading = MutableLiveData<Boolean>()
+    var servicesLoading = MutableLiveData<Boolean>()
 
     private val firestore = Firebase.firestore
 
 
     fun refreshData(){
         val servicesList = arrayListOf<Service>()
+
+        servicesLoading.value = true
 
         firestore.collection("services").get().addOnSuccessListener { querySnapshot ->
             if (querySnapshot != null) {
