@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "user_detail")
 class UserDetails(
     @PrimaryKey()
-    var uid: String,
+    var userEmail: String,
     @ColumnInfo("full_name")
     var fullName: String,
     @ColumnInfo("sub_count")

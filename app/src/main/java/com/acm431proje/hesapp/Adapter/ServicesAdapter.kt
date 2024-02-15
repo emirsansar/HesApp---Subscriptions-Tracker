@@ -34,7 +34,7 @@ class ServicesAdapter(private val serviceList: ArrayList<Service>) : RecyclerVie
         val currentService = serviceList.get(position)
 
         val currServiceName = currentService.name
-        val imageName = "service_" + "${(currServiceName.replace(" ", "").replace("+", "")).lowercase()}"
+        val imageName = "service_" + currServiceName.replace(" ", "").replace("+", "").lowercase()
 
         val resourceId = holder.itemView.context.resources.getIdentifier(imageName, "drawable", holder.itemView.context.packageName)
         if (resourceId != 0) {

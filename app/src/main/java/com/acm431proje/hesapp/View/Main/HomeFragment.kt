@@ -9,10 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.room.Room
 import com.acm431proje.hesapp.Model.UserDetails
-import com.acm431proje.hesapp.Room.UserDetailDB
-import com.acm431proje.hesapp.Room.UserDetailDao
+import com.acm431proje.hesapp.R
 import com.acm431proje.hesapp.View.Login.LoginActivity
 import com.acm431proje.hesapp.ViewModel.UserDetailViewModel
 import com.acm431proje.hesapp.databinding.FragmentHomeBinding
@@ -22,10 +20,9 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class HomeFragment : Fragment() {
+class HomeFragment: Fragment() {
 
     private lateinit var binding : FragmentHomeBinding
 
@@ -34,9 +31,6 @@ class HomeFragment : Fragment() {
     private var currentUser : FirebaseUser? = null
 
     private lateinit var viewModel : UserDetailViewModel
-
-    private lateinit var db: UserDetailDB
-    private lateinit var userDetailDao: UserDetailDao
 
     companion object {
         var isChangedUserPlans: Boolean = false
@@ -50,8 +44,6 @@ class HomeFragment : Fragment() {
         auth = Firebase.auth
         currentUser = auth.currentUser
 
-        db = Room.databaseBuilder(requireContext().applicationContext,UserDetailDB::class.java,"UserDetail").build()
-        userDetailDao = db.userDetailDao()
     }
 
     override fun onCreateView(
@@ -68,12 +60,11 @@ class HomeFragment : Fragment() {
         viewModel = ViewModelProvider(this)[UserDetailViewModel::class.java]
 
         val userEmail = auth.currentUser!!.email
-        val userID = viewModel.getUserID(userEmail!!)
 
-        lifecycleScope.launch(Dispatchers.Main){
-            val userFullName = viewModel.getUserFullName(userEmail)
-
-            loadingUserDetails(userEmail, userID, userFullName)
+        viewModel.getUserFullName(userEmail!!) { userFullName ->
+            lifecycleScope.launch {
+                loadingUserDetails(userEmail, userFullName!!)
+            }
         }
 
 
@@ -84,31 +75,25 @@ class HomeFragment : Fragment() {
 
 
 
-    private suspend fun loadingUserDetails(userEmail: String, userID: String, userFullName: String){
+    private fun loadingUserDetails(userEmail: String, userFullName: String){
 
-        if(Companion.isAppLaunched){
-            viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
-
-            viewModel.userDetails.value?.let { userDetail ->
-                updateUI(userDetail)
-                viewModel.insertUserDetailToDB(userDetail)
+        if(isAppLaunched){
+            viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
+                updateUI(userDetail!!)
             }
 
-            Companion.isAppLaunched = false
+            isAppLaunched = false
         }
         else {
             if (isChangedUserPlans) {
-                viewModel.refreshDataFromFirebase(userEmail, userID, userFullName!!)
-
-                viewModel.userDetails.value?.let { userDetail ->
-                    viewModel.updateUserDetailToDB(userDetail)
-                    updateUI(userDetail)
+                viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
+                    updateUI(userDetail!!)
                 }
 
                 isChangedUserPlans = false
             }
             else{
-                viewModel.refreshDataFromRoomDB(userID) { userDetail ->
+                viewModel.refreshDataFromRoomDB(userEmail) { userDetail ->
                     updateUI(userDetail!!)
                 }
             }
@@ -120,9 +105,10 @@ class HomeFragment : Fragment() {
         binding.textTotalSub.text = userDetail.subCount.toString()
 
         val monthlySpendFormatted = String.format("%.2f", userDetail.spendingMonth)
-        binding.textMonthlySpend.text = "$monthlySpendFormatted \u20BA"
+        binding.textMonthlySpend.text = getString(R.string.turkish_lira_icon, monthlySpendFormatted)
+
         val annualSpendFormatted = String.format("%.2f", userDetail.spendingAnnual )
-        binding.textAnnualSpend.text = "$annualSpendFormatted \u20BA"
+        binding.textAnnualSpend.text = getString(R.string.turkish_lira_icon, annualSpendFormatted)
     }
 
     private fun showLogoutConfirmDialog(){

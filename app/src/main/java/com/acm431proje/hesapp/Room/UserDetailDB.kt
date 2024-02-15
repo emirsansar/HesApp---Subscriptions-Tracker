@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.acm431proje.hesapp.Model.UserDetails
 
-@Database(entities = [UserDetails::class], version = 4)
+@Database(entities = [UserDetails::class], version = 5)
 abstract class UserDetailDB: RoomDatabase() {
 
     abstract fun userDetailDao(): UserDetailDao
@@ -24,6 +24,6 @@ abstract class UserDetailDB: RoomDatabase() {
 
         private fun makeDatabase(context: Context) = Room.databaseBuilder(
             context.applicationContext, UserDetailDB::class.java, "UserDetail"
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 }

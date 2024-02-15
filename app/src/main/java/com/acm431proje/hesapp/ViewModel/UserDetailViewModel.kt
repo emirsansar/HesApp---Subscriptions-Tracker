@@ -23,13 +23,16 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
 
     val firestore = Firebase.firestore
 
-    suspend fun refreshDataFromFirebase(userEmail: String, userID: String, userFullName: String) {
-        val countAndSpending: Pair<Int, Float> = calculateSubCountAndMonthlySpending(userEmail)
+     fun refreshDataFromFirebase(userEmail: String, userFullName: String, callback: (UserDetails?) -> Unit) {
+        calculateSubCountAndMonthlySpending(userEmail){ subCountAndSpending ->
 
-        val userDetail = UserDetails(userID, userFullName,
-            countAndSpending.first, countAndSpending.second, countAndSpending.second * 12)
+            val userDetail = UserDetails(userEmail, userFullName,
+                subCountAndSpending.first, subCountAndSpending.second, subCountAndSpending.second * 12)
 
-        userDetails.value = userDetail
+            userDetails.value = userDetail
+
+            callback(userDetail)
+        }
     }
 
     fun refreshDataFromRoomDB(userID: String, callback: (UserDetails?) -> Unit) {
@@ -51,6 +54,7 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
         }
     }
 
+
     fun getUserID(userEmail: String): String{
         var uid: String ?= null
 
@@ -62,81 +66,62 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
         return uid.toString()
     }
 
-
-
-    suspend fun getUserFullName(userEmail: String): String {
-        var fullName: String? = null
-
-        try {
-            val documentRef = firestore.collection("users").document(userEmail)
-            val documentSnapshot = documentRef.get().await()
-
-            if (documentSnapshot.exists()) {
+    fun getUserFullName(userEmail: String, callback: (String?) -> Unit) {
+        launch {
+            firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
                 val name = documentSnapshot.getString("name")
                 val surname = documentSnapshot.getString("surname")
 
                 if (!name.isNullOrEmpty() && !surname.isNullOrEmpty()) {
-                    fullName = "$name $surname"
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("HATA", "Hata oluştu: ${e.localizedMessage}", e)
-        }
+                    val fullName = "$name $surname"
 
-        return fullName.toString()
-    }
-
-    fun getUserFullName2(userEmail: String, callback: (String?) -> Unit) {
-        launch {
-            var fullName: String? = null
-
-            firestore.collection("users").document(userEmail).get().addOnSuccessListener { documentSnapshot ->
-                val name = documentSnapshot.getString("uid")
-                val surname = documentSnapshot.getString("surname")
-
-                if (!name.isNullOrEmpty() && !surname.isNullOrEmpty()) {
-                    fullName = "$name $surname"
+                    callback(fullName)
                 }
             }.addOnFailureListener { e->
                 Log.e("HATA", "Hata oluştu: ${e.localizedMessage}", e)
             }
-            callback(fullName)
         }
     }
 
-    suspend fun calculateSubCountAndMonthlySpending(userEmail: String): Pair<Int, Float> {
-        var subCount = 0
-        var monthlySpending = 0f
 
-        try {
+    private fun calculateSubCountAndMonthlySpending(userEmail: String, callback: (Pair<Int, Float>) -> Unit) {
+        launch {
+            var subCount = 0
+            var monthlySpending = 0f
+
             val documentRef = firestore.collection("usersubscriptions").document(userEmail)
-            val documentSnapshot = documentRef.get().await()
+            documentRef.get().addOnSuccessListener { documentSnapshot ->
+                if (documentSnapshot.exists()) {
+                    val collections = documentSnapshot.data?.keys
 
-            if (documentSnapshot.exists()) {
-                val collections = documentSnapshot.data?.keys
+                    if (collections != null) {
+                        for (collectionName in collections) {
+                            val subsInformation = documentRef.collection(collectionName).document("subsinfo")
+                            subsInformation.get().addOnSuccessListener { subsDocument ->
+                                val data = subsDocument.data
 
-                if (collections != null) {
-                    for (collectionName in collections) {
-                        val subsInformation = documentRef.collection(collectionName).document("subsinfo")
-                        val document = subsInformation.get().await()
+                                val planPrice = data?.get("planPrice") as? Number
+                                if (planPrice != null) {
+                                    monthlySpending += planPrice.toFloat()
+                                }
+                                subCount++
 
-                        val data = document.data
-
-                        val planPrice = data?.get("planPrice") as? Number
-                        if (planPrice != null) {
-                            monthlySpending += planPrice.toFloat()
+                                if (subCount == collections.size) {
+                                    callback(Pair(subCount, monthlySpending))
+                                }
+                            }.addOnFailureListener { e ->
+                                Log.e("HATA", "Alt koleksiyon okunurken hata oluştu: ${e.localizedMessage}", e)
+                            }
                         }
-                        subCount++
                     }
+                } else {
+                    callback(Pair(subCount, monthlySpending))
                 }
+            }.addOnFailureListener { e ->
+                Log.e("HATA", "Belge okunurken hata oluştu: ${e.localizedMessage}", e)
             }
-        } catch (e: Exception) {
-            //Toast.makeText(requireContext(), "Bir hata oluştu: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
         }
 
-        println(subCount)
-        println(monthlySpending)
-
-        return Pair(first = subCount, second = monthlySpending)
     }
+
 }
