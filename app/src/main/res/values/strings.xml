@@ -26,5 +26,6 @@
         <item>Spor</item>
     </string-array>
 
+    <string name="turkish_lira_icon">%s ₺</string>
 
 </resources>
