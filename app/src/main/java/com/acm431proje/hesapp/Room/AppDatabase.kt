@@ -6,14 +6,14 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.acm431proje.hesapp.Model.UserDetails
 
-@Database(entities = [UserDetails::class], version = 5)
-abstract class UserDetailDB: RoomDatabase() {
+@Database(entities = [UserDetails::class], version = 6)
+abstract class AppDatabase: RoomDatabase() {
 
     abstract fun userDetailDao(): UserDetailDao
 
     companion object {
 
-        @Volatile private var instance: UserDetailDB? = null
+        @Volatile private var instance: AppDatabase? = null
 
         private val lock = Any()
         operator fun invoke(context: Context) = instance ?: synchronized(lock) {
@@ -23,7 +23,7 @@ abstract class UserDetailDB: RoomDatabase() {
         }
 
         private fun makeDatabase(context: Context) = Room.databaseBuilder(
-            context.applicationContext, UserDetailDB::class.java, "UserDetail"
+            context.applicationContext, AppDatabase::class.java, "app-database"
         ).fallbackToDestructiveMigration().build()
     }
 }

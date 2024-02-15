@@ -2,20 +2,12 @@ package com.acm431proje.hesapp.ViewModel
 
 import android.app.Application
 import android.util.Log
-import android.widget.Toast
-import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.room.Room
 import com.acm431proje.hesapp.Model.UserDetails
-import com.acm431proje.hesapp.Room.UserDetailDB
-import com.acm431proje.hesapp.View.Main.HomeFragment
+import com.acm431proje.hesapp.Room.AppDatabase
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
-import kotlinx.coroutines.withContext
 
 class UserDetailViewModel(application: Application): BaseViewModel(application) {
 
@@ -37,20 +29,20 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
 
     fun refreshDataFromRoomDB(userID: String, callback: (UserDetails?) -> Unit) {
         launch {
-            val userDetail = UserDetailDB(getApplication()).userDetailDao().getUserDetail(userID)
+            val userDetail = AppDatabase(getApplication()).userDetailDao().getUserDetail(userID)
             callback(userDetail)
         }
     }
 
     fun insertUserDetailToDB(userDetails: UserDetails){
         launch {
-            UserDetailDB(getApplication()).userDetailDao().insert(userDetails)
+            AppDatabase(getApplication()).userDetailDao().insert(userDetails)
         }
     }
 
     fun updateUserDetailToDB(userDetails: UserDetails){
         launch {
-            UserDetailDB(getApplication()).userDetailDao().insert(userDetails)
+            AppDatabase(getApplication()).userDetailDao().insert(userDetails)
         }
     }
 
