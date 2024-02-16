@@ -5,10 +5,12 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import android.widget.AdapterView
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.acm431proje.hesapp.Adapter.OffersAdapter
-import com.acm431proje.hesapp.Model.Offer
+import com.acm431proje.hesapp.ViewModel.OfferViewModel
 import com.acm431proje.hesapp.databinding.FragmentOffersBinding
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,17 +21,14 @@ class OffersFragment : Fragment() {
     private lateinit var binding: FragmentOffersBinding
     private lateinit var firestore: FirebaseFirestore
 
-    private lateinit var offersList: ArrayList<Offer>
-    private var feedOffersAdapter: OffersAdapter? = null
+    private val offersAdapter = OffersAdapter(arrayListOf())
 
-    private lateinit var layoutManager: LinearLayoutManager
+    private lateinit var viewModel: OfferViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         firestore = Firebase.firestore
-
-        offersList = ArrayList()
     }
 
     override fun onCreateView(
@@ -43,37 +42,67 @@ class OffersFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        layoutManager = LinearLayoutManager(requireContext())
-        binding.recyclerOffersView.layoutManager = layoutManager
+        viewModel = ViewModelProvider(this)[OfferViewModel::class.java]
 
-        getOffers()
+        setupRecyclerView()
 
-        feedOffersAdapter = OffersAdapter(offersList)
-        binding.recyclerOffersView.adapter = feedOffersAdapter
-        feedOffersAdapter?.notifyDataSetChanged()
+        observeViewModel()
+
+        setListeners()
     }
 
 
-    private fun getOffers(){
+    private fun observeLiveData(){
+        viewModel.offers.observe(viewLifecycleOwner, Observer { offers ->
+            offers?.let {
+                offersAdapter!!.updateData(offers)
+            }
+        })
 
-        firestore.collection("offers").get().addOnSuccessListener { snapshot ->
-            offersList?.clear()
+        viewModel.offersLoading.observe(viewLifecycleOwner, Observer { loading ->
+            binding.swipeRefreshLayout.visibility = if (loading) View.INVISIBLE else View.VISIBLE
+        })
+    }
 
-            for (document in snapshot){
-                val company = document.getString("Company")
-                val offerText = document.getString("Info")
+    private fun observeViewModel(){
+        viewModel.fetchOffers()
 
-                val offer = Offer(company!!, offerText!!)
-                offersList.add(offer)
+        observeLiveData()
+    }
+
+    private fun setupRecyclerView(){
+        binding.recyclerOffersView.layoutManager = LinearLayoutManager(context)
+        binding.recyclerOffersView.adapter = offersAdapter
+    }
+    private fun setSpinnerCompanyListener(){
+        binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?, view: View?, position: Int, id: Long
+            ) {
+                if (position != 0){
+                    val selectedItem = parent?.getItemAtPosition(position).toString()
+                    viewModel.getServicesByCompany(selectedItem)?.let {
+                        offersAdapter.updateData(it)
+                    }
+                }
+                else viewModel.fetchOffers()
             }
 
-            offersList.sortBy { it.company }
-
-            feedOffersAdapter?.notifyDataSetChanged()
-        }.addOnFailureListener { error ->
-            Toast.makeText(requireContext(), "Bir hata oldu: ${error.localizedMessage}",Toast.LENGTH_SHORT).show()
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
         }
-
     }
 
+    private fun setSwipeRefreshListener(){
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.fetchOffers()
+            binding.swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
+    private fun setListeners(){
+        setSpinnerCompanyListener()
+        setSwipeRefreshListener()
+    }
 }

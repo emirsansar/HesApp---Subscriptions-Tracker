@@ -38,4 +38,11 @@ class OffersAdapter(private val offersList: ArrayList<Offer>): RecyclerView.Adap
         }
     }
 
+    fun updateData(newList: List<Offer>){
+        offersList.clear()
+        offersList.addAll(newList)
+        notifyDataSetChanged()
+    }
+
+
 }
