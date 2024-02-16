@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import com.acm431proje.hesapp.Model.UserDetails
 import com.acm431proje.hesapp.R
 import com.acm431proje.hesapp.View.Login.LoginActivity
@@ -20,7 +19,6 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
-import kotlinx.coroutines.launch
 
 class HomeFragment: Fragment() {
 
@@ -34,10 +32,11 @@ class HomeFragment: Fragment() {
 
     companion object {
         var isChangedUserPlans: Boolean = false
-        var isAppLaunched: Boolean = true
+        var shouldFetchDataFromFirebase: Boolean = true
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
         super.onCreate(savedInstanceState)
 
         firestore = Firebase.firestore
@@ -56,82 +55,73 @@ class HomeFragment: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewModel = ViewModelProvider(this)[UserDetailViewModel::class.java]
-
         val userEmail = auth.currentUser!!.email
 
-        viewModel.getUserFullName(userEmail!!) { userFullName ->
-            lifecycleScope.launch {
-                loadingUserDetails(userEmail, userFullName!!)
-            }
-        }
+        viewModel = ViewModelProvider(this)[UserDetailViewModel::class.java]
 
+        loadingUserDetails(userEmail!!)
 
-        binding.btnLogout.setOnClickListener {
-            showLogoutConfirmDialog()
-        }
+        setLogOutListener()
     }
 
 
-
-    private fun loadingUserDetails(userEmail: String, userFullName: String){
-
-        if(isAppLaunched){
-            viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
-                updateUI(userDetail!!)
-
-                viewModel.insertUserDetailToDB(userDetail)
-            }
-
-            isAppLaunched = false
-        }
-        else {
-            if (isChangedUserPlans) {
-                viewModel.refreshDataFromFirebase(userEmail, userFullName){ userDetail ->
+    private fun loadingUserDetails(userEmail: String){
+        viewModel.getUserFullName(userEmail!!) { userFullName ->
+            if(shouldFetchDataFromFirebase){
+                viewModel.fetchDataFromFirebase(userEmail, userFullName!!){ userDetail ->
                     updateUI(userDetail!!)
-
-                    viewModel.updateUserDetailToDB(userDetail)
+                    viewModel.insertUserDetailToDB(userDetail)
                 }
-
-                isChangedUserPlans = false
+                shouldFetchDataFromFirebase = false
             }
-            else{
-                viewModel.refreshDataFromRoomDB(userEmail) { userDetail ->
-                    updateUI(userDetail!!)
+            else {
+                if (isChangedUserPlans) {
+                    viewModel.fetchDataFromFirebase(userEmail, userFullName!!){ userDetail ->
+                        updateUI(userDetail!!)
+                        viewModel.updateUserDetailToDB(userDetail)
+                    }
+                    isChangedUserPlans = false
+                }
+                else{
+                    viewModel.fetchDataFromRoomDB(userEmail) { userDetail -> updateUI(userDetail!!) }
                 }
             }
         }
     }
 
     private fun updateUI(userDetail: UserDetails){
-        binding.textGreeting.text = userDetail.fullName
-        binding.textTotalSub.text = userDetail.subCount.toString()
+        with(binding) {
+            textGreeting.text = userDetail.fullName
+            textTotalSub.text = userDetail.subCount.toString()
 
-        val monthlySpendFormatted = String.format("%.2f", userDetail.spendingMonth)
-        binding.textMonthlySpend.text = getString(R.string.turkish_lira_icon, monthlySpendFormatted)
+            val monthlySpendFormatted = String.format("%.2f", userDetail.spendingMonth)
+            textMonthlySpend.text = getString(R.string.turkish_lira_icon, monthlySpendFormatted)
+            val annualSpendFormatted = String.format("%.2f", userDetail.spendingAnnual )
+            textAnnualSpend.text = getString(R.string.turkish_lira_icon, annualSpendFormatted)
+        }
+    }
 
-        val annualSpendFormatted = String.format("%.2f", userDetail.spendingAnnual )
-        binding.textAnnualSpend.text = getString(R.string.turkish_lira_icon, annualSpendFormatted)
+    private fun setLogOutListener(){
+        binding.btnLogout.setOnClickListener {
+            showLogoutConfirmDialog()
+        }
     }
 
     private fun showLogoutConfirmDialog(){
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Çıkış Yap")
-        builder.setMessage("Çıkış yapmak istediğinizden emin misiniz?")
-
-        builder.setPositiveButton("Evet") { dialog, which ->
-            auth.signOut()
-
-            val intent = Intent(requireContext(), LoginActivity::class.java)
-            startActivity(intent)
-            requireActivity().finish()
-        }
-        builder.setNegativeButton("Hayır") { dialog, which ->
-            dialog.dismiss()
-        }
-
-        val dialog: AlertDialog = builder.create()
-        dialog.show()
+        AlertDialog.Builder(requireContext())
+            .setTitle("Çıkış Yap")
+            .setMessage("Çıkış yapmak istediğinizden emin misiniz?")
+            .setPositiveButton("Evet") { dialog, which ->
+                auth.signOut()
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                startActivity(intent)
+                requireActivity().finish()
+            }
+            .setNegativeButton("Hayır") { dialog, which ->
+                dialog.dismiss()
+            }
+            .create()
+            .show()
     }
 
 }

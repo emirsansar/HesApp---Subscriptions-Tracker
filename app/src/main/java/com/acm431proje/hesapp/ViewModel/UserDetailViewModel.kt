@@ -15,19 +15,21 @@ class UserDetailViewModel(application: Application): BaseViewModel(application) 
 
     private val firestore = Firebase.firestore
 
-     fun refreshDataFromFirebase(userEmail: String, userFullName: String, callback: (UserDetails?) -> Unit) {
-        calculateSubCountAndMonthlySpending(userEmail){ subCountAndSpending ->
+     fun fetchDataFromFirebase(userEmail: String, userFullName: String, callback: (UserDetails?) -> Unit) {
+         launch {
+             calculateSubCountAndMonthlySpending(userEmail){ subCountAndSpending ->
 
-            val userDetail = UserDetails(userEmail, userFullName,
-                subCountAndSpending.first, subCountAndSpending.second, subCountAndSpending.second * 12)
+                 val userDetail = UserDetails(userEmail, userFullName,
+                     subCountAndSpending.first, subCountAndSpending.second, subCountAndSpending.second * 12)
 
-            userDetails.value = userDetail
+                 userDetails.value = userDetail
 
-            callback(userDetail)
-        }
+                 callback(userDetail)
+             }
+         }
     }
 
-    fun refreshDataFromRoomDB(userID: String, callback: (UserDetails?) -> Unit) {
+    fun fetchDataFromRoomDB(userID: String, callback: (UserDetails?) -> Unit) {
         launch {
             val userDetail = AppDatabase(getApplication()).userDetailDao().getUserDetail(userID)
             callback(userDetail)

@@ -1,11 +1,9 @@
 package com.acm431proje.hesapp.ViewModel
 
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.acm431proje.hesapp.Model.Plan
-import com.acm431proje.hesapp.Model.Service
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.tasks.await
@@ -20,8 +18,10 @@ class PlansViewModel(): ViewModel() {
     private val firestore = Firebase.firestore
 
 
-    fun refreshData(serviceName: String){
+    fun fetchPlanDataFromFirebase(serviceName: String){
         val plansList = arrayListOf<Plan>()
+
+        plansLoading.value = true
 
         val serviceDocRef = firestore.collection("services").document(serviceName)
 
@@ -37,8 +37,6 @@ class PlansViewModel(): ViewModel() {
                             }
                         }
                     }
-                    plansList.sortBy { it.price }
-
                     plans.value = plansList
 
                     plansError.value = false
@@ -48,7 +46,7 @@ class PlansViewModel(): ViewModel() {
                 plansError.value = true
                 plansLoading.value = false
 
-                Log.e("HATA", e.localizedMessage)
+                Log.e("HATA", e.localizedMessage!!)
             }
     }
 
@@ -74,7 +72,6 @@ class PlansViewModel(): ViewModel() {
                 val subscriptionDocSnapshot = subscriptionDocRef.get().await()
 
                 if (!subscriptionDocSnapshot.exists()) {
-
                     val planPriceNumber: Number = try {
                         planPrice.toFloat()
                     } catch (e: NumberFormatException) {

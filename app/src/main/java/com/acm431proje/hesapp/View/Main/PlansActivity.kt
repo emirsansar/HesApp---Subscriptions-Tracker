@@ -44,18 +44,22 @@ class PlansActivity : AppCompatActivity() {
         binding = ActivityPlansBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        auth = Firebase.auth
-        currentUser = auth.currentUser
-        firestore = Firebase.firestore
+        initializeFirebase()
 
         serviceName = intent.getStringExtra("serviceName").toString()
-        initializeViews(serviceName)
+        setViews(serviceName)
 
-        viewModel = ViewModelProvider(this)[PlansViewModel::class.java]
         setupRecyclerView()
 
-        setSelectListener()
-        setBackToServiceScreenListener()
+        observeViewModel()
+
+        setListeners()
+    }
+
+
+    private fun selectClickedPlan(plan: Plan){
+        clickedPlanName = plan.name
+        clickedPlanPrice = plan.price
     }
 
     private fun observeLiveData(){
@@ -80,24 +84,28 @@ class PlansActivity : AppCompatActivity() {
                 if (it) {
                     binding.plansLoading.visibility = View.VISIBLE
                     binding.recyclerPlansView.visibility = View.INVISIBLE
+                    binding.btnSelect.visibility = View.INVISIBLE
                     binding.textError.visibility = View.INVISIBLE
                 } else {
                     binding.plansLoading.visibility = View.GONE
+                    binding.recyclerPlansView.visibility = View.VISIBLE
+                    binding.btnSelect.visibility = View.VISIBLE
                 }
             }
         })
     }
 
-
-    private fun selectClickedPlan(plan: Plan){
-        clickedPlanName = plan.name
-        clickedPlanPrice = plan.price
-    }
-
-    private fun setupRecyclerView(){
-        viewModel.refreshData(serviceName)
+    private fun observeViewModel(){
+        viewModel = ViewModelProvider(this)[PlansViewModel::class.java]
+        viewModel.fetchPlanDataFromFirebase(serviceName)
 
         observeLiveData()
+    }
+
+    private fun initializeFirebase(){
+        auth = Firebase.auth
+        currentUser = auth.currentUser
+        firestore = Firebase.firestore
     }
 
     private fun setViews(serviceName: String){
@@ -113,9 +121,7 @@ class PlansActivity : AppCompatActivity() {
         }
     }
 
-    private fun initializeViews(serviceName: String){
-        setViews(serviceName)
-
+    private fun setupRecyclerView(){
         binding.recyclerPlansView.layoutManager = LinearLayoutManager(this)
 
         plansAdapter = PlansAdapter(arrayListOf()) { clickedPlan ->
@@ -153,6 +159,11 @@ class PlansActivity : AppCompatActivity() {
         binding.imageBackToServiceScreen.setOnClickListener {
             backToServiceScreen()
         }
+    }
+
+    private fun setListeners(){
+        setSelectListener()
+        setBackToServiceScreenListener()
     }
 
     private fun backToServiceScreen(){

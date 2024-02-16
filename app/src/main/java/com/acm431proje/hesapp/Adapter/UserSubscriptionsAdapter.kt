@@ -41,7 +41,6 @@ class UserSubscriptionsAdapter(private val ownedServicesList: ArrayList<UserSubs
         val planName = currentService.planName
         val planPrice = currentService.planPrice
 
-
         holder.binding.textServiceName.text = serviceName
         holder.binding.textPlanName.text = planName
         holder.binding.textPlanPrice.text = "%.2f ₺".format(planPrice)

@@ -43,90 +43,18 @@ class ServicesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        binding.recyclerServicesView.layoutManager = LinearLayoutManager(context)
-        binding.recyclerServicesView.adapter = servicesAdapter
+        setupRecyclerView()
 
-        viewModel = ViewModelProvider(this)[ServicesViewModel::class.java]
+        observeViewModel()
 
-        viewModel.refreshData()
-
-        observeLiveData()
-
-
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            viewModel.refreshData()
-
-            refreshUI()
-            binding.swipeRefreshLayout.isRefreshing = false
-        }
-
-        binding.searchText.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-
-            override fun afterTextChanged(s: Editable?) {
-                val query = s.toString()
-                if (query.isNotEmpty()) {
-                    servicesAdapter.updateData(viewModel.findServicesByName(query))
-                    binding.searchCancel.visibility = View.VISIBLE
-                } else {
-                    viewModel.refreshData()
-                    binding.searchCancel.visibility = View.GONE
-                }
-            }
-        })
-
-        binding.spinnerOrder.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
-            override fun onItemSelected(
-                parent: AdapterView<*>?, view: View?, position: Int, id: Long
-            ) {
-                when (position) {
-                    1 -> servicesAdapter.sortByNameAscending()
-                    2 -> servicesAdapter.sortByNameDescending()
-                }
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
-        }
-
-        binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
-            override fun onItemSelected(
-                parent: AdapterView<*>?, view: View?, position: Int, id: Long
-            ) {
-                when (position) {
-                    1 -> viewModel.getServicesByType("Alışveriş")
-                        ?.let { servicesAdapter.updateData(it) }
-                    2 -> viewModel.getServicesByType("Dizi/Film")
-                        ?.let { servicesAdapter.updateData(it) }
-                    3 -> viewModel.getServicesByType("Gelişim")
-                        ?.let { servicesAdapter.updateData(it) }
-                    4 -> viewModel.getServicesByType("Müzik")
-                        ?.let { servicesAdapter.updateData(it) }
-                    5 -> viewModel.getServicesByType("Oyun")
-                        ?.let { servicesAdapter.updateData(it) }
-                    else -> viewModel.getServicesByType("Spor")
-                        ?.let { servicesAdapter.updateData(it) }
-                }
-
-                binding.spinnerOrder.setSelection(0)
-            }
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                TODO("Not yet implemented")
-            }
-        }
-
-        binding.btnRefresh.setOnClickListener {
-            refreshUI()
-            viewModel.refreshData()
-        }
-
-        binding.searchCancel.setOnClickListener {
-            binding.searchText.setText("")
-            binding.searchCancel.visibility = View.GONE
-        }
+        setListeners()
     }
 
+
+    private fun setupRecyclerView(){
+        binding.recyclerServicesView.layoutManager = LinearLayoutManager(context)
+        binding.recyclerServicesView.adapter = servicesAdapter
+    }
 
     private fun observeLiveData(){
         viewModel.services.observe(viewLifecycleOwner, Observer { services ->
@@ -159,6 +87,106 @@ class ServicesFragment : Fragment() {
         })
     }
 
+    private fun observeViewModel(){
+        viewModel = ViewModelProvider(this)[ServicesViewModel::class.java]
+
+        viewModel.refreshData()
+
+        observeLiveData()
+    }
+
+    private fun setSpinnerOrderListener(){
+        binding.spinnerOrder.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?, view: View?, position: Int, id: Long
+            ) {
+                when (position) {
+                    1 -> servicesAdapter.sortByNameAscending()
+                    2 -> servicesAdapter.sortByNameDescending()
+                }
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
+
+    private fun setSpinnerCategoryListener(){
+        binding.spinnerCategory.onItemSelectedListener = object : AdapterView.OnItemSelectedListener{
+            override fun onItemSelected(
+                parent: AdapterView<*>?, view: View?, position: Int, id: Long
+            ) {
+                when (position) {
+                    1 -> viewModel.getServicesByType("Alışveriş")
+                        ?.let { servicesAdapter.updateData(it) }
+                    2 -> viewModel.getServicesByType("Dizi/Film")
+                        ?.let { servicesAdapter.updateData(it) }
+                    3 -> viewModel.getServicesByType("Gelişim")
+                        ?.let { servicesAdapter.updateData(it) }
+                    4 -> viewModel.getServicesByType("Müzik")
+                        ?.let { servicesAdapter.updateData(it) }
+                    5 -> viewModel.getServicesByType("Oyun")
+                        ?.let { servicesAdapter.updateData(it) }
+                    else -> viewModel.getServicesByType("Spor")
+                        ?.let { servicesAdapter.updateData(it) }
+                }
+                binding.spinnerOrder.setSelection(0)
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                TODO("Not yet implemented")
+            }
+        }
+    }
+
+    private fun setSearchTextListener(){
+        binding.searchText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+            override fun afterTextChanged(s: Editable?) {
+                val query = s.toString()
+                if (query.isNotEmpty()) {
+                    servicesAdapter.updateData(viewModel.findServicesByName(query))
+                    binding.searchCancel.visibility = View.VISIBLE
+                } else {
+                    viewModel.refreshData()
+                    binding.searchCancel.visibility = View.GONE
+                }
+            }
+        })
+    }
+
+    private fun setSwipeRefresyLayoutListener(){
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            viewModel.refreshData()
+
+            refreshUI()
+            binding.swipeRefreshLayout.isRefreshing = false
+        }
+    }
+
+    private fun setRefreshBtnListener(){
+        binding.btnRefresh.setOnClickListener {
+            refreshUI()
+            viewModel.refreshData()
+        }
+    }
+
+    private fun setSearchCancelListener(){
+        binding.searchCancel.setOnClickListener {
+            binding.searchText.setText("")
+            binding.searchCancel.visibility = View.GONE
+        }
+    }
+
+    private fun setListeners(){
+        setSpinnerOrderListener()
+        setSpinnerCategoryListener()
+        setSearchTextListener()
+        setSwipeRefresyLayoutListener()
+        setRefreshBtnListener()
+        setSearchCancelListener()
+    }
 
     private fun refreshUI(){
         binding.spinnerOrder.setSelection(0)

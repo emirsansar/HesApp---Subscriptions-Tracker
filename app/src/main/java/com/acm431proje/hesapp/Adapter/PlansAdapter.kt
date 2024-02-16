@@ -1,5 +1,6 @@
 package com.acm431proje.hesapp.Adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -15,9 +16,16 @@ class PlansAdapter(private val plansList: ArrayList<Plan>, private val onItemCli
     var selectedPlan: Plan? = null
     var lastCheckedPosition = -1
 
+    private val colors: Array<String> = arrayOf("#a295cf","#8c7cbf")
+
     fun updateData(newList: List<Plan>) {
         plansList.clear()
         plansList.addAll(newList)
+        plansList.sortBy {
+            val priceString = it.price
+            .substringBefore(" ")
+            .replace(".", "")
+            priceString.toIntOrNull() ?: Int.MAX_VALUE }
         notifyDataSetChanged()
     }
 
@@ -34,26 +42,11 @@ class PlansAdapter(private val plansList: ArrayList<Plan>, private val onItemCli
         val currentPlan = plansList[position]
 
         holder.binding.textPlanName.text = currentPlan.name
-        holder.binding.textPlanPrice.text = currentPlan.price + " \u20BA"
+        holder.binding.textPlanPrice.text = currentPlan.price + " ₺"
 
         holder.binding.checkBox.isChecked = (position == lastCheckedPosition)
 
-//        holder.binding.checkBox.setOnCheckedChangeListener { _, isChecked ->
-//            println(position)
-//            if (isChecked) {
-//                if (lastCheckedPosition != -1 && lastCheckedPosition != position) {
-//                    plansList[lastCheckedPosition].isSelected = false
-//                    notifyItemChanged(lastCheckedPosition)
-//                }
-//                selectedPlan = currentPlan
-//                lastCheckedPosition = position
-//                onItemClick(selectedPlan!!)
-//            } else {
-//                selectedPlan = null
-//                lastCheckedPosition = -1
-//                onItemClick(Plan("","",false))
-//            }
-//        }
+        holder.binding.root.setBackgroundColor(Color.parseColor(colors[position%2]))
 
         holder.binding.checkBox.setOnClickListener {
             if (position != RecyclerView.NO_POSITION &&  position != lastCheckedPosition) {
@@ -75,8 +68,5 @@ class PlansAdapter(private val plansList: ArrayList<Plan>, private val onItemCli
         }
 
     }
-
-
-
 
 }

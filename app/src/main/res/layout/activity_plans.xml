@@ -7,6 +7,27 @@
     tools:context=".View.Main.PlansActivity"
     android:background="@drawable/uygulama_arkaplan">
 
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/constraintLayout2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/ana_mor"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        >
+
+        <ImageView
+            android:id="@+id/hesappicon"
+            android:layout_width="190dp"
+            android:layout_height="60dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/hesapp" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
     <TextView
         android:id="@+id/textServiceName"
         android:layout_width="wrap_content"
@@ -27,7 +48,7 @@
         android:id="@+id/textView16"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="15dp"
         android:fontFamily="@font/opensanssemibold"
         android:text="Seç:"
         android:textColor="#303030"
@@ -42,7 +63,7 @@
         android:id="@+id/textView18"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="15dp"
         android:fontFamily="@font/opensanssemibold"
         android:text="Ücret"
         android:textColor="#303030"
@@ -57,7 +78,7 @@
         android:id="@+id/textView17"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="15dp"
         android:fontFamily="@font/opensanssemibold"
         android:text="Plan"
         android:textColor="#303030"
@@ -73,16 +94,16 @@
         android:layout_width="0dp"
         android:layout_height="280dp"
         android:layout_marginStart="12dp"
-        android:layout_marginTop="55dp"
+        android:layout_marginTop="50dp"
         android:layout_marginEnd="12dp"
         android:background="@drawable/border_recycler"
+        android:paddingStart="1dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="1dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textServiceName"
-        android:paddingTop="2dp"
-        android:paddingStart="1dp"
-        android:paddingEnd="1dp"/>
+        app:layout_constraintTop_toBottomOf="@+id/textServiceName" />
 
     <Button
         android:id="@+id/btnSelect"
@@ -105,11 +126,11 @@
         android:id="@+id/imageService"
         android:layout_width="65dp"
         android:layout_height="65dp"
-        android:layout_marginTop="35dp"
+        android:layout_marginTop="15dp"
         android:foregroundGravity="center"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout2"
         tools:srcCompat="@tools:sample/avatars" />
 
     <ImageView
@@ -117,20 +138,20 @@
         android:layout_width="35dp"
         android:layout_height="34dp"
         android:layout_marginStart="15dp"
-        android:layout_marginTop="35dp"
+        android:layout_marginTop="15dp"
         android:background="#a28be8"
         android:padding="4dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.002"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/constraintLayout2"
         app:srcCompat="@drawable/back" />
 
     <TextView
         android:id="@+id/textError"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="HATA"
+        android:text=""
         android:textSize="20sp"
         android:visibility="invisible"
         android:textColor="@color/black"
