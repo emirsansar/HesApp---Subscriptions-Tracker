@@ -26,6 +26,13 @@
         <item>Spor</item>
     </string-array>
 
+    <string-array name="filter_options_offers">
+        <item>----</item>
+        <item>Nays</item>
+        <item>Papara</item>
+        <item>Tosla</item>
+    </string-array>
+
     <string name="turkish_lira_icon">%s ₺</string>
 
 </resources>
